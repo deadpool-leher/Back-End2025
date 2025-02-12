@@ -1,25 +1,39 @@
-const http = require('http')
-const {hello, greetings} = require('./helloWorld')
-const moment = require('moment')
-const express = require('express')
-const app = express()
+const express = require('express');
+const moment = require('moment');
+const users = require('./users');
 
-app.get('/', (req, res) => res.send('Hello World'))
-app.get('/about', (req, res) => res.status(200).json({
-    status: 'success',
-    message: 'About page',
-    data: []
-}))
-app.post('/contoh', (req, res) => res.send('request method POST'))
-app.put('/contoh', (req, res)=> res.send("Request method PUT"))
-app.delete('/contoh', (req, res) => res.send("Request method DELETE"))
-app.patch('/contoh', (req,res) => res.send("Request method PATCH"))
+const app = express();
+const port = 3000;
 
-app.all('/universal', (req, res) => res.send(`Request method ${req.method}`))
-// Routing dinamis 
-// 1. Menggunakan params
-app.get('/post/:id', (req, res)=> res.send(`Artikel ke - ${req.params.id}`))
+// Middleware untuk parsing JSON (opsional)
+app.use(express.json());
 
-const hostname = "127.0.0.1"
-const port = 3000
-app.listen(port, hostname, () => console.log(`Server running at http://${hostname}:${port}`))
+// Route untuk halaman home
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'This is the home page' });
+});
+
+// Route untuk halaman about
+app.get('/about', (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'response success',
+        description: 'exercise #03',
+        date: moment().format('MMMM Do YYYY, h:mm:ss a')
+    });
+});
+
+// Route untuk halaman users
+app.get('/users', (req, res) => {
+    res.status(200).json(users);
+});
+
+// Route untuk menangani 404 (Not Found)
+app.use((req, res) => {
+    res.status(404).json({ error: '404 Not Found' });
+});
+
+// Menjalankan server
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});
