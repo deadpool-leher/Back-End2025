@@ -1,39 +1,80 @@
-const express = require('express');
-const moment = require('moment');
-const users = require('./users');
-
+const http = require("http");
+const { hello, greetings } = require("./helloWorld");
+const moment = require("moment");
+const express = require("express");
 const app = express();
-const port = 3000;
+const morgan = require("morgan");
 
-// Middleware untuk parsing JSON (opsional)
-app.use(express.json());
+const users = [
+    { id: 1, name: "John" },
+    { id: 2, name: "Smith" },
+    { id: 3, name: "Bob" }
+];
 
-// Route untuk halaman home
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'This is the home page' });
-});
+//Middleware;
+const log = (req, res, next) => {
+  console.log(
+    moment().format("MMMM Do YYYY, h:mm:ss a") +
+      " " +
+      req.ip +
+      " " +
+      req.originalUrl
+  );
+  next();
+};
 
-// Route untuk halaman about
-app.get('/about', (req, res) => {
-    res.status(200).json({
-        status: 'success',
-        message: 'response success',
-        description: 'exercise #03',
-        date: moment().format('MMMM Do YYYY, h:mm:ss a')
-    });
-});
-
-// Route untuk halaman users
 app.get('/users', (req, res) => {
-    res.status(200).json(users);
+    res.json(users);
 });
 
-// Route untuk menangani 404 (Not Found)
+app.get('/users/:name', (req, res) => {
+    const userName = req.params.name.toLowerCase();
+    const user = users.find(u => u.name.toLowerCase() === userName);
+    
+    if (user) {
+        res.json(user);
+    } else {
+        res.status(404).json({ message: "Data user tidak ditemukan" });
+    }
+});
+
+app.use(morgan("tiny"));
+
+app.get("/", (req, res) => res.send("Hello World"));
+app.get("/about", (req, res) =>
+  res.status(200).json({
+    status: "success",
+    message: "About page",
+    data: [],
+  })
+);
+app.post("/contoh", (req, res) => res.send("request method POST"));
+app.put("/contoh", (req, res) => res.send("Request method PUT"));
+app.delete("/contoh", (req, res) => res.send("Request method DELETE"));
+app.patch("/contoh", (req, res) => res.send("Request method PATCH"));
+
+app.all("/universal", (req, res) => res.send(`Request method ${req.method}`));
+// Routing dinamis
+// 1. Menggunakan params
+app.get("/post/:id", (req, res) => res.send(`Artikel ke - ${req.params.id}`));
+// 2. Menggunakan Query String
+app.get("/post", (req, res) => {
+  const { page, sort } = req.query;
+  res.send(`Query string= page :${page}, sort : ${sort}`);
+});
+
+//Middleware
 app.use((req, res) => {
-    res.status(404).json({ error: '404 Not Found' });
+    res.status(404).json({ status: "error", message: "resource tidak ditemukan" });
 });
 
-// Menjalankan server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ status: "error", message: "terjadi kesalahan pada server" });
 });
+
+const hostname = "127.0.0.1";
+const port = 3000;
+app.listen(port, hostname, () =>
+  console.log(`Server running at http://${hostname}:${port}`)
+);
